@@ -3,3 +3,7 @@ __pycache__/
 *.pyc
 
 data/**/*.csv
+
+# Trained model artifacts
+models/*
+!models/.gitkeep
