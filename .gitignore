@@ -7,3 +7,5 @@ data/**/*.csv
 # Trained model artifacts
 models/*
 !models/.gitkeep
+
+outputs/
