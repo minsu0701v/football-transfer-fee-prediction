@@ -1,0 +1,544 @@
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 230px;
+  padding: 28px 20px;
+  background: #07101d;
+  border-right: 1px solid #1e293b;
+}
+
+.sidebar h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.sidebar nav {
+  margin-top: 45px;
+}
+
+.sidebar nav p {
+  padding: 14px 12px;
+  margin: 5px 0;
+  border-radius: 8px;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.sidebar nav p:first-child {
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.1);
+}
+
+.main-content {
+  flex: 1;
+  padding: 22px 38px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* =========================
+   검색 영역
+========================= */
+
+.search-area {
+  position: relative;
+  width: 520px;
+}
+
+.search-box {
+  width: 100%;
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 0 14px;
+
+  background: #111827;
+  border: 1px solid #263244;
+  border-radius: 10px;
+}
+
+.search-box input {
+  flex: 1;
+
+  background: transparent;
+  border: none;
+  outline: none;
+
+  color: #f1f5f9;
+  font-size: 14px;
+}
+
+.search-box input::placeholder {
+  color: #64748b;
+}
+
+.search-icon {
+  color: #94a3b8;
+  font-size: 22px;
+}
+
+.shortcut {
+  padding: 5px 8px;
+
+  background: #1e293b;
+  border-radius: 5px;
+
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.search-dropdown {
+  position: absolute;
+  top: 56px;
+  left: 0;
+
+  width: 100%;
+  max-height: 360px;
+  overflow-y: auto;
+
+  background: #111827;
+  border: 1px solid #263244;
+  border-radius: 10px;
+
+  z-index: 100;
+}
+
+.search-result-item {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 12px 14px;
+
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #1e293b;
+
+  color: #e2e8f0;
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background: #1e293b;
+}
+
+.search-result-item img {
+  width: 42px;
+  height: 42px;
+
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.search-result-item div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.search-result-item strong {
+  font-size: 14px;
+}
+
+.search-result-item span {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.search-message {
+  padding: 14px;
+  margin: 0;
+
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.search-message.error {
+  color: #f87171;
+}
+
+/* =========================
+   우측 상단
+========================= */
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+
+  color: #cbd5e1;
+}
+
+.help {
+  width: 24px;
+  height: 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #94a3b8;
+  border-radius: 50%;
+}
+
+.user {
+  font-size: 14px;
+}
+
+/* =========================
+   상단 대시보드
+========================= */
+
+.dashboard-top {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap: 16px;
+
+  margin-top: 22px;
+}
+
+.card {
+  background: #111b2b;
+  border: 1px solid #223047;
+  border-radius: 12px;
+  padding: 22px;
+}
+
+.card > h2 {
+  margin: 0 0 24px;
+  font-size: 18px;
+}
+
+/* =========================
+   선수 프로필
+========================= */
+
+.player-info {
+  display: flex;
+  gap: 24px;
+}
+
+.player-image {
+  width: 180px;
+  height: 220px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #1e293b;
+  border-radius: 12px;
+
+  color: #64748b;
+
+  overflow: hidden;
+}
+
+.player-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.player-details h2 {
+  margin-top: 0;
+  font-size: 24px;
+}
+
+.player-details p {
+  margin: 18px 0;
+  color: #cbd5e1;
+}
+
+/* =========================
+   시즌 기록
+========================= */
+
+.season-stats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+
+  padding: 18px 0;
+
+  background: #172235;
+  border: 1px solid #26364f;
+  border-radius: 10px;
+}
+
+.season-stats div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+
+  border-right: 1px solid #2a374b;
+}
+
+.season-stats div:last-child {
+  border-right: none;
+}
+
+.season-stats span {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.season-stats strong {
+  font-size: 21px;
+}
+
+.season-stats .highlight {
+  color: #34d399;
+}
+
+/* =========================
+   하단 대시보드
+========================= */
+
+.dashboard-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.55fr;
+  gap: 16px;
+
+  margin-top: 16px;
+}
+
+/* =========================
+   예측 조건
+========================= */
+
+.prediction-form {
+  min-height: 300px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  margin-top: 10px;
+}
+
+.form-group label {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.form-group select {
+  width: 100%;
+  height: 48px;
+
+  padding: 0 14px;
+
+  background: #111b2b;
+  color: #e2e8f0;
+
+  border: 1px solid #334155;
+  border-radius: 8px;
+
+  font-size: 14px;
+  outline: none;
+}
+
+.predict-button {
+  width: 100%;
+  height: 52px;
+
+  margin-top: 28px;
+
+  background: #34d399;
+  color: #06281d;
+
+  border: none;
+  border-radius: 8px;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.predict-button:hover {
+  background: #6ee7b7;
+}
+
+/* =========================
+   예측 결과
+========================= */
+
+.prediction-result {
+  min-height: 300px;
+}
+
+.result-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  margin-top: 20px;
+}
+
+.result-label {
+  margin: 0;
+
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.result-fee {
+  margin-top: 12px;
+
+  color: #34d399;
+  font-size: 48px;
+  line-height: 1;
+}
+
+.result-confidence {
+  align-self: flex-start;
+
+  margin: 24px 0 8px;
+
+  color: #34d399;
+  font-size: 13px;
+}
+
+.confidence-bar {
+  width: 100%;
+  height: 7px;
+
+  background: #263244;
+  border-radius: 999px;
+
+  overflow: hidden;
+}
+
+.confidence-fill {
+  width: 87%;
+  height: 100%;
+
+  background: #34d399;
+}
+
+.prediction-range {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+
+  margin-top: 28px;
+  padding: 18px;
+
+  background: #111b2b;
+  border: 1px solid #2a374b;
+  border-radius: 8px;
+}
+
+.prediction-range span {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.prediction-range strong {
+  font-size: 18px;
+}
+
+/* =========================
+   SHAP
+========================= */
+
+.shap-card {
+  min-height: 300px;
+}
+
+.shap-description {
+  margin: -10px 0 22px;
+
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.shap-list {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+}
+
+.shap-row {
+  display: grid;
+  grid-template-columns: 105px 1fr 50px;
+  align-items: center;
+  gap: 12px;
+}
+
+.shap-name {
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.shap-bar-area {
+  width: 100%;
+  height: 7px;
+
+  background: #263244;
+  border-radius: 999px;
+
+  overflow: hidden;
+}
+
+.shap-bar {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.shap-bar.positive {
+  background: #34d399;
+}
+
+.shap-bar.negative {
+  background: #60a5fa;
+}
+
+.shap-value {
+  text-align: right;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.positive-text {
+  color: #34d399;
+}
+
+.negative-text {
+  color: #60a5fa;
+}
+
+.shap-legend {
+  display: flex;
+  justify-content: flex-end;
+  gap: 18px;
+
+  margin-top: 24px;
+
+  font-size: 12px;
+}
