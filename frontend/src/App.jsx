@@ -212,7 +212,7 @@ function App() {
           </div>
 
           <div className="card season-card">
-            <h2>이번 시즌 기록</h2>
+            <h2>24/25시즌 기록</h2>
 
             <div className="season-stats">
               <div>
