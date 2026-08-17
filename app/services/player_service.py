@@ -1,171 +1,10 @@
 import pandas as pd
 
-from app.config import (
-    PREDICTION_DATA_FILE,
-    TRAINING_DATA_FILE,
-)
+from sqlalchemy import text
+
+from app.database import get_engine
 from app.schemas.response import PlayerSearchResult
 from app.utils.common import nullable_value
-
-
-# ============================================================
-# Cache
-# ============================================================
-
-_prediction_df: pd.DataFrame | None = None
-_teams_df: pd.DataFrame | None = None
-
-
-# ============================================================
-# Prediction Dataset
-# ============================================================
-
-def load_prediction_dataset() -> pd.DataFrame:
-    global _prediction_df
-
-    if _prediction_df is not None:
-        return _prediction_df
-
-    if not PREDICTION_DATA_FILE.exists():
-        raise FileNotFoundError(
-            "prediction_dataset.csv를 찾을 수 없습니다: "
-            f"{PREDICTION_DATA_FILE}"
-        )
-
-    df = pd.read_csv(
-        PREDICTION_DATA_FILE,
-        low_memory=False,
-    )
-
-    df["player_id"] = pd.to_numeric(
-        df["player_id"],
-        errors="coerce",
-    )
-
-    df = df.dropna(
-        subset=["player_id"]
-    ).copy()
-
-    df["player_id"] = (
-        df["player_id"]
-        .astype(int)
-    )
-
-    _prediction_df = df
-
-    return _prediction_df
-
-
-# ============================================================
-# Team Dataset
-# ============================================================
-
-def load_teams() -> pd.DataFrame:
-    global _teams_df
-
-    if _teams_df is not None:
-        return _teams_df
-
-    if not TRAINING_DATA_FILE.exists():
-        _teams_df = pd.DataFrame(
-            columns=[
-                "team_id",
-                "team_name",
-                "league_id",
-                "league_name",
-            ]
-        )
-
-        return _teams_df
-
-    training_df = pd.read_csv(
-        TRAINING_DATA_FILE,
-        low_memory=False,
-    )
-
-    from_teams = training_df[
-        [
-            "from_team_id",
-            "from_team_name",
-            "from_league_id",
-            "from_league_name",
-        ]
-    ].copy()
-
-    from_teams.columns = [
-        "team_id",
-        "team_name",
-        "league_id",
-        "league_name",
-    ]
-
-    to_teams = training_df[
-        [
-            "to_team_id",
-            "to_team_name",
-            "to_league_id",
-            "to_league_name",
-        ]
-    ].copy()
-
-    to_teams.columns = [
-        "team_id",
-        "team_name",
-        "league_id",
-        "league_name",
-    ]
-
-    teams = pd.concat(
-        [
-            from_teams,
-            to_teams,
-        ],
-        ignore_index=True,
-    )
-
-    teams = teams.dropna(
-        subset=[
-            "team_id",
-            "team_name",
-        ]
-    )
-
-    teams["team_id"] = (
-        teams["team_id"]
-        .astype(str)
-        .str.strip()
-    )
-
-    teams["league_id"] = (
-        teams["league_id"]
-        .astype(str)
-        .str.strip()
-    )
-
-    teams = teams.drop_duplicates(
-        subset=["team_id"],
-        keep="last",
-    )
-
-    _teams_df = (
-        teams
-        .sort_values("team_name")
-        .reset_index(drop=True)
-    )
-
-    return _teams_df
-
-
-# ============================================================
-# Getter
-# ============================================================
-
-def get_prediction_dataset() -> pd.DataFrame:
-    return load_prediction_dataset()
-
-
-def get_team_dataset() -> pd.DataFrame:
-    return load_teams()
 
 
 # ============================================================
@@ -177,32 +16,69 @@ def search_players(
     limit: int = 10,
 ) -> list[PlayerSearchResult]:
 
-    df = get_prediction_dataset()
+    query = text(
+        """
+        SELECT
+            player_id,
+            player_name,
+            player_image_url,
+            current_club_id,
+            current_club_name,
+            current_league_id,
+            current_league_name,
+            main_position,
+            season_name,
+            matches,
+            started,
+            minutes,
+            goals,
+            assists,
+            rating
+        FROM prediction_players
+        WHERE player_name ILIKE :keyword
+        ORDER BY player_name
+        LIMIT :limit
+        """
+    )
 
-    results = df[
-        df["player_name"]
-        .astype(str)
-        .str.contains(
-            keyword,
-            case=False,
-            na=False,
-            regex=False,
-        )
-    ].head(limit)
+    results = pd.read_sql_query(
+        query,
+        con=get_engine(),
+        params={
+            "keyword": f"%{keyword}%",
+            "limit": limit,
+        },
+    )
 
     response = []
 
     for _, row in results.iterrows():
 
         current_club_id = (
-            str(row.get("current_club_id")).strip()
-            if pd.notna(row.get("current_club_id"))
+            str(
+                row.get(
+                    "current_club_id"
+                )
+            ).strip()
+            if pd.notna(
+                row.get(
+                    "current_club_id"
+                )
+            )
             else None
         )
 
         current_league_id = (
-            str(row.get("current_league_id")).strip()
-            if pd.notna(row.get("current_league_id"))
+            str(
+                row.get(
+                    "current_league_id"
+                )
+            ).strip()
+            if pd.notna(
+                row.get(
+                    "current_league_id"
+                )
+            )
             else None
         )
 
@@ -211,44 +87,83 @@ def search_players(
                 player_id=int(
                     row["player_id"]
                 ),
+
                 player_name=str(
                     row["player_name"]
                 ),
+
                 player_image_url=nullable_value(
-                    row.get("player_image_url")
+                    row.get(
+                        "player_image_url"
+                    )
                 ),
-                current_club_id=current_club_id,
+
+                current_club_id=(
+                    current_club_id
+                ),
+
                 current_club_name=nullable_value(
-                    row.get("current_club_name")
+                    row.get(
+                        "current_club_name"
+                    )
                 ),
-                current_league_id=current_league_id,
+
+                current_league_id=(
+                    current_league_id
+                ),
+
                 current_league_name=nullable_value(
-                    row.get("current_league_name")
+                    row.get(
+                        "current_league_name"
+                    )
                 ),
+
                 main_position=nullable_value(
-                    row.get("main_position")
+                    row.get(
+                        "main_position"
+                    )
                 ),
+
                 season_name=nullable_value(
-                    row.get("season_name")
+                    row.get(
+                        "season_name"
+                    )
                 ),
 
                 matches=nullable_value(
-                    row.get("matches")
+                    row.get(
+                        "matches"
+                    )
                 ),
+
                 started=nullable_value(
-                    row.get("started")
+                    row.get(
+                        "started"
+                    )
                 ),
+
                 minutes=nullable_value(
-                    row.get("minutes")
+                    row.get(
+                        "minutes"
+                    )
                 ),
+
                 goals=nullable_value(
-                    row.get("goals")
+                    row.get(
+                        "goals"
+                    )
                 ),
+
                 assists=nullable_value(
-                    row.get("assists")
+                    row.get(
+                        "assists"
+                    )
                 ),
+
                 rating=nullable_value(
-                    row.get("rating")
+                    row.get(
+                        "rating"
+                    )
                 ),
             )
         )
@@ -257,18 +172,29 @@ def search_players(
 
 
 # ============================================================
-# Player
+# Get Player
 # ============================================================
 
 def get_player(
     player_id: int,
 ) -> pd.Series | None:
 
-    df = get_prediction_dataset()
+    query = text(
+        """
+        SELECT *
+        FROM prediction_players
+        WHERE player_id = :player_id
+        LIMIT 1
+        """
+    )
 
-    result = df[
-        df["player_id"] == player_id
-    ]
+    result = pd.read_sql_query(
+        query,
+        con=get_engine(),
+        params={
+            "player_id": player_id,
+        },
+    )
 
     if result.empty:
         return None
@@ -277,7 +203,7 @@ def get_player(
 
 
 # ============================================================
-# Teams
+# Search Teams
 # ============================================================
 
 def search_teams(
@@ -286,34 +212,178 @@ def search_teams(
     limit: int = 100,
 ) -> list[dict]:
 
-    teams = get_team_dataset()
+    query = text(
+        """
+        WITH teams AS (
 
-    if league_id:
-        teams = teams[
-            teams["league_id"]
-            .astype(str)
-            == league_id
-        ]
+            SELECT
+                from_team_id::text AS team_id,
+                from_team_name AS team_name,
+                from_league_id AS league_id,
+                from_league_name AS league_name,
+                1 AS priority
+            FROM training_data
+            WHERE
+                from_team_id IS NOT NULL
+                AND from_team_name IS NOT NULL
 
-    if keyword:
-        teams = teams[
-            teams["team_name"]
-            .astype(str)
-            .str.contains(
-                keyword,
-                case=False,
-                na=False,
-                regex=False,
+            UNION ALL
+
+            SELECT
+                to_team_id::text AS team_id,
+                to_team_name AS team_name,
+                to_league_id AS league_id,
+                to_league_name AS league_name,
+                2 AS priority
+            FROM training_data
+            WHERE
+                to_team_id IS NOT NULL
+                AND to_team_name IS NOT NULL
+        ),
+
+        deduplicated AS (
+
+            SELECT DISTINCT ON (team_id)
+                team_id,
+                team_name,
+                league_id,
+                league_name
+            FROM teams
+            ORDER BY
+                team_id,
+                priority DESC
+        )
+
+        SELECT
+            team_id,
+            team_name,
+            league_id,
+            league_name
+        FROM deduplicated
+        WHERE
+            (
+                :league_id IS NULL
+                OR league_id = :league_id
             )
-        ]
+            AND (
+                :keyword IS NULL
+                OR team_name ILIKE :keyword
+            )
+        ORDER BY team_name
+        LIMIT :limit
+        """
+    )
 
-    teams = teams.head(limit)
+    teams = pd.read_sql_query(
+        query,
+        con=get_engine(),
+        params={
+            "league_id": league_id,
+
+            "keyword": (
+                f"%{keyword}%"
+                if keyword
+                else None
+            ),
+
+            "limit": limit,
+        },
+    )
 
     return [
         {
-            column: nullable_value(value)
+            column: nullable_value(
+                value
+            )
             for column, value
             in row.to_dict().items()
         }
         for _, row in teams.iterrows()
     ]
+
+
+# ============================================================
+# Database Counts
+# ============================================================
+
+def get_prediction_player_count() -> int:
+    """
+    prediction_players 테이블의
+    전체 선수 수를 반환한다.
+    """
+
+    query = text(
+        """
+        SELECT COUNT(*)
+        FROM prediction_players
+        """
+    )
+
+    with get_engine().connect() as connection:
+
+        result = connection.execute(
+            query
+        )
+
+        count = result.scalar_one()
+
+    return int(count)
+
+
+def get_team_count() -> int:
+    """
+    training_data의 출발/도착 팀을 합친 뒤
+    team_id 기준 중복 제거한 팀 수를 반환한다.
+
+    기존 load_teams()의
+    drop_duplicates(team_id, keep="last")
+    구조와 같은 개념이다.
+    """
+
+    query = text(
+        """
+        WITH teams AS (
+
+            SELECT
+                from_team_id::text AS team_id,
+                1 AS priority
+            FROM training_data
+            WHERE
+                from_team_id IS NOT NULL
+                AND from_team_name IS NOT NULL
+
+            UNION ALL
+
+            SELECT
+                to_team_id::text AS team_id,
+                2 AS priority
+            FROM training_data
+            WHERE
+                to_team_id IS NOT NULL
+                AND to_team_name IS NOT NULL
+        ),
+
+        deduplicated AS (
+
+            SELECT DISTINCT ON (team_id)
+                team_id
+            FROM teams
+            ORDER BY
+                team_id,
+                priority DESC
+        )
+
+        SELECT COUNT(*)
+        FROM deduplicated
+        """
+    )
+
+    with get_engine().connect() as connection:
+
+        result = connection.execute(
+            query
+        )
+
+        count = result.scalar_one()
+
+    return int(count)

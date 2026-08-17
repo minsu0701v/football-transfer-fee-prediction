@@ -8,10 +8,12 @@ from app.routers import (
     predict,
     teams,
 )
+
 from app.services.model_loader import load_model
+
 from app.services.player_service import (
-    load_prediction_dataset,
-    load_teams,
+    get_prediction_player_count,
+    get_team_count,
 )
 
 
@@ -22,16 +24,37 @@ from app.services.player_service import (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    FastAPI 시작 시 모델과 데이터를 메모리에 미리 로드한다.
+    FastAPI 시작 시 모델을 로드하고
+    PostgreSQL 데이터 상태를 확인한다.
     """
 
+    # --------------------------------------------------------
+    # Model
+    # --------------------------------------------------------
+
     model = load_model()
-    prediction_df = load_prediction_dataset()
-    teams_df = load_teams()
+
+    # --------------------------------------------------------
+    # PostgreSQL
+    # --------------------------------------------------------
+
+    player_count = (
+        get_prediction_player_count()
+    )
+
+    team_count = (
+        get_team_count()
+    )
+
+    # --------------------------------------------------------
+    # Startup Log
+    # --------------------------------------------------------
 
     print()
     print("=" * 60)
-    print("Football Transfer Fee Prediction API")
+    print(
+        "Football Transfer Fee Prediction API"
+    )
     print("=" * 60)
 
     print(
@@ -40,13 +63,17 @@ async def lifespan(app: FastAPI):
     )
 
     print(
-        f"예측 선수 로드 : "
-        f"{len(prediction_df):,}명"
+        f"예측 선수 수   : "
+        f"{player_count:,}명"
     )
 
     print(
-        f"팀 목록 로드   : "
-        f"{len(teams_df):,}개"
+        f"팀 목록 수     : "
+        f"{team_count:,}개"
+    )
+
+    print(
+        "데이터 소스    : PostgreSQL"
     )
 
     print("=" * 60)
@@ -59,12 +86,15 @@ async def lifespan(app: FastAPI):
 # ============================================================
 
 app = FastAPI(
-    title="Football Transfer Fee Prediction API",
+    title=(
+        "Football Transfer Fee "
+        "Prediction API"
+    ),
     description=(
         "축구 선수의 프로필과 경기 데이터를 기반으로 "
         "예상 이적료를 예측하는 API"
     ),
-    version="1.2.0",
+    version="1.3.0",
     lifespan=lifespan,
 )
 
@@ -111,11 +141,14 @@ app.include_router(
     tags=["System"],
 )
 def root():
+
     return {
         "message": (
-            "Football Transfer Fee Prediction API"
+            "Football Transfer Fee "
+            "Prediction API"
         ),
-        "version": "1.2.0",
+        "version": "1.3.0",
+        "data_source": "PostgreSQL",
     }
 
 
@@ -128,12 +161,19 @@ def root():
     tags=["System"],
 )
 def health():
-    prediction_df = load_prediction_dataset()
-    teams_df = load_teams()
+
+    player_count = (
+        get_prediction_player_count()
+    )
+
+    team_count = (
+        get_team_count()
+    )
 
     return {
         "status": "ok",
         "model_loaded": True,
-        "player_count": len(prediction_df),
-        "team_count": len(teams_df),
+        "database": "PostgreSQL",
+        "player_count": player_count,
+        "team_count": team_count,
     }

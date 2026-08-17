@@ -14,11 +14,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 # Data Files
 # ============================================================
 
-PREDICTION_DATA_FILE = (
-    PROJECT_ROOT
-    / "data"
-    / "processed"
-    / "prediction_dataset.csv"
+PREDICTION_DATA_FILE = Path(
+    "data/processed/prediction_dataset_european.csv"
 )
 
 TRAINING_DATA_FILE = (
@@ -36,7 +33,7 @@ TRAINING_DATA_FILE = (
 MODEL_FILE = (
     PROJECT_ROOT
     / "models"
-    / "transfer_fee_model_v1_2.joblib"
+    / "transfer_fee_model_v1_3.joblib"
 )
 
 
@@ -58,7 +55,7 @@ TOP5_LEAGUE_IDS = {
 
 
 # ============================================================
-# Model Features - v1.2 (No Market Value)
+# Model Features - v1.3 (No Market Value)
 # ============================================================
 
 MODEL_FEATURES = [
