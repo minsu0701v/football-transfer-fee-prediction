@@ -1,0 +1,12 @@
+venv/
+frontend/
+data/
+outputs/
+results/
+scripts/
+
+.git/
+.env
+
+__pycache__/
+*.pyc

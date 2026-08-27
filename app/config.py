@@ -9,23 +9,6 @@ import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-
-# ============================================================
-# Data Files
-# ============================================================
-
-PREDICTION_DATA_FILE = Path(
-    "data/processed/prediction_dataset_european.csv"
-)
-
-TRAINING_DATA_FILE = (
-    PROJECT_ROOT
-    / "data"
-    / "processed"
-    / "training_dataset.csv"
-)
-
-
 # ============================================================
 # Model File
 # ============================================================

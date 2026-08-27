@@ -12,3 +12,4 @@ outputs/
 results/
 
 .env
+football_transfer_db.sql

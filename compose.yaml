@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:17
+    container_name: football-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: football_transfer_db
+    volumes:
+      - football-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d football_transfer_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    container_name: football-api
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:${POSTGRES_PASSWORD}@db:5432/football_transfer_db
+    depends_on:
+      db:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:1.28-alpine
+    container_name: football-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+
+volumes:
+  football-db-data:
