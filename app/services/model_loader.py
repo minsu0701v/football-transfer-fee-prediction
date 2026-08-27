@@ -16,7 +16,7 @@ _model = None
 
 def load_model():
     """
-    v1.2 앙상블 모델을 최초 한 번만 로드한다.
+    v1.3 앙상블 모델을 최초 한 번만 로드한다.
     """
 
     global _model
@@ -37,12 +37,12 @@ def load_model():
         )
 
         # ====================================================
-        # v1.2 Bundle 검증
+        # v1.3 Bundle 검증
         # ====================================================
 
         if not isinstance(bundle, dict):
             raise ValueError(
-                "로드된 모델이 v1.2 앙상블 Bundle 형식이 아닙니다."
+                "로드된 모델이 v1.3 앙상블 Bundle 형식이 아닙니다."
             )
 
         required_keys = {
@@ -53,6 +53,7 @@ def load_model():
             "alpha_d",
             "features_c",
             "features_d",
+            "european_features",
         }
 
         missing_keys = (
@@ -62,21 +63,19 @@ def load_model():
 
         if missing_keys:
             raise ValueError(
-                "v1.2 모델 Bundle에 필요한 값이 없습니다: "
+                "v1.3 모델 Bundle에 필요한 값이 없습니다: "
                 f"{sorted(missing_keys)}"
             )
 
-        if bundle["version"] != "1.2":
+        if bundle["version"] != "1.3":
             raise ValueError(
-                "v1.2 모델이 아닙니다. "
+                "v1.3 모델이 아닙니다. "
                 f"현재 version: {bundle['version']}"
             )
 
         _model = bundle
 
-        print(
-            "모델 로드 완료"
-        )
+        print("모델 로드 완료")
 
         print(
             "앙상블: "
@@ -94,6 +93,11 @@ def load_model():
             f"{len(bundle['features_d'])}개"
         )
 
+        print(
+            f"Europe features: "
+            f"{len(bundle['european_features'])}개"
+        )
+
     return _model
 
 
@@ -103,8 +107,7 @@ def load_model():
 
 def get_model():
     """
-    현재 로드된 v1.2 모델 Bundle을 반환한다.
-    로드되지 않았다면 자동으로 로드한다.
+    현재 로드된 v1.3 모델 Bundle을 반환한다.
     """
 
     return load_model()

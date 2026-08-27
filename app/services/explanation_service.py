@@ -18,6 +18,9 @@ CATEGORICAL_FEATURES = {
 
 
 FEATURE_DISPLAY_NAMES = {
+    # --------------------------------------------------------
+    # Player / League
+    # --------------------------------------------------------
     "age_at_transfer": "나이",
     "height": "키",
     "matches": "출전 경기 수",
@@ -26,18 +29,40 @@ FEATURE_DISPLAY_NAMES = {
     "assists": "도움",
     "minutes": "출전 시간",
     "rating": "평점",
+
     "is_same_league": "동일 리그 이적 여부",
     "is_top5_destination": "5대 리그 목적지 여부",
+
     "goals_per90": "90분당 득점",
     "assists_per90": "90분당 도움",
     "goal_contributions_per90": "90분당 공격포인트",
     "starts_ratio": "선발 비율",
     "minutes_per_match": "경기당 출전 시간",
+
     "age_squared": "나이 제곱",
+
     "from_league_id": "현재 리그",
     "to_league_id": "목적 리그",
     "main_position": "주 포지션",
     "foot": "주발",
+
+    # --------------------------------------------------------
+    # v1.3 Europe
+    # --------------------------------------------------------
+    "ucl_appearances": "챔피언스리그 출전",
+    "ucl_starts": "챔피언스리그 선발",
+    "ucl_goals": "챔피언스리그 득점",
+    "ucl_assists": "챔피언스리그 도움",
+
+    "uel_appearances": "유로파리그 출전",
+    "uel_starts": "유로파리그 선발",
+    "uel_goals": "유로파리그 득점",
+    "uel_assists": "유로파리그 도움",
+
+    "uecl_appearances": "컨퍼런스리그 출전",
+    "uecl_starts": "컨퍼런스리그 선발",
+    "uecl_goals": "컨퍼런스리그 득점",
+    "uecl_assists": "컨퍼런스리그 도움",
 }
 
 
@@ -93,22 +118,26 @@ def get_grouped_feature_name(
 
 
 # ============================================================
-# SHAP Explanation
+# Single Model SHAP
 # ============================================================
 
-def explain_prediction(
+def get_model_contributions(
+    pipeline,
     prediction_input: pd.DataFrame,
-    top_n: int = 10,
-) -> list[ExplanationItem]:
+) -> dict[str, float]:
     """
-    XGBoost native pred_contribs를 이용해
-    예측에 영향을 준 feature를 계산한다.
+    하나의 XGBoost Pipeline에 대해
+    native SHAP(pred_contribs)을 계산한다.
 
-    impact 값은 유로 단위가 아니라
-    log1p(target) 공간의 SHAP 값이다.
+    반환값:
+    {
+        "rating": 0.21,
+        "age_at_transfer": -0.15,
+        ...
+    }
+
+    값은 log1p(target) 공간의 SHAP contribution.
     """
-
-    pipeline = get_model()
 
     preprocessor = pipeline.named_steps[
         "preprocessor"
@@ -147,7 +176,7 @@ def explain_prediction(
         pred_contribs=True,
     )[0]
 
-    # 마지막 값은 bias(base value)이므로 제외
+    # 마지막 값은 bias(base value)
     feature_contributions = (
         contributions[:-1]
     )
@@ -190,27 +219,155 @@ def explain_prediction(
             + float(impact)
         )
 
+    return grouped_impacts
+
+
+# ============================================================
+# v1.3 Ensemble SHAP Explanation
+# ============================================================
+
+def explain_prediction(
+    prediction_input: pd.DataFrame,
+    top_n: int = 10,
+) -> list[ExplanationItem]:
+    """
+    v1.3 Ensemble:
+
+        Model C * alpha_c
+        +
+        Model D * alpha_d
+
+    각 모델의 native SHAP contribution을 계산한 뒤
+    ensemble weight를 적용하여 feature 단위로 합산한다.
+
+    impact 값은 실제 유로 금액이 아니라
+    각 모델의 log1p(target) 공간 SHAP 값을
+    ensemble weight로 결합한 설명용 값이다.
+    """
+
+    bundle = get_model()
+
+    # ========================================================
+    # Model / Ensemble 정보
+    # ========================================================
+
+    model_c = bundle[
+        "model_c"
+    ]
+
+    model_d = bundle[
+        "model_d"
+    ]
+
+    alpha_c = float(
+        bundle["alpha_c"]
+    )
+
+    alpha_d = float(
+        bundle["alpha_d"]
+    )
+
+    features_c = bundle[
+        "features_c"
+    ]
+
+    features_d = bundle[
+        "features_d"
+    ]
+
+    # ========================================================
+    # Model C SHAP
+    # ========================================================
+
+    input_c = prediction_input[
+        features_c
+    ]
+
+    contributions_c = (
+        get_model_contributions(
+            pipeline=model_c,
+            prediction_input=input_c,
+        )
+    )
+
+    # ========================================================
+    # Model D SHAP
+    # ========================================================
+
+    input_d = prediction_input[
+        features_d
+    ]
+
+    contributions_d = (
+        get_model_contributions(
+            pipeline=model_d,
+            prediction_input=input_d,
+        )
+    )
+
+    # ========================================================
+    # Ensemble SHAP
+    # ========================================================
+
+    ensemble_impacts: dict[str, float] = {}
+
     # --------------------------------------------------------
-    # Sort
+    # Model C
     # --------------------------------------------------------
 
+    for feature_name, impact in (
+        contributions_c.items()
+    ):
+
+        ensemble_impacts[feature_name] = (
+            ensemble_impacts.get(
+                feature_name,
+                0.0,
+            )
+            + alpha_c * impact
+        )
+
+    # --------------------------------------------------------
+    # Model D
+    # --------------------------------------------------------
+
+    for feature_name, impact in (
+        contributions_d.items()
+    ):
+
+        ensemble_impacts[feature_name] = (
+            ensemble_impacts.get(
+                feature_name,
+                0.0,
+            )
+            + alpha_d * impact
+        )
+
+    # ========================================================
+    # Sort by absolute impact
+    # ========================================================
+
     sorted_features = sorted(
-        grouped_impacts.items(),
-        key=lambda item: abs(item[1]),
+        ensemble_impacts.items(),
+        key=lambda item: abs(
+            item[1]
+        ),
         reverse=True,
     )
 
-    sorted_features = sorted_features[
-        :top_n
-    ]
+    sorted_features = (
+        sorted_features[:top_n]
+    )
 
-    # --------------------------------------------------------
+    # ========================================================
     # Response
-    # --------------------------------------------------------
+    # ========================================================
 
     explanation = []
 
-    for feature_name, impact in sorted_features:
+    for feature_name, impact in (
+        sorted_features
+    ):
 
         direction = (
             "increase"
@@ -220,9 +377,11 @@ def explain_prediction(
 
         explanation.append(
             ExplanationItem(
-                feature=FEATURE_DISPLAY_NAMES.get(
-                    feature_name,
-                    feature_name,
+                feature=(
+                    FEATURE_DISPLAY_NAMES.get(
+                        feature_name,
+                        feature_name,
+                    )
                 ),
                 feature_name=feature_name,
                 impact=float(impact),

@@ -9,4 +9,6 @@ models/*
 !models/.gitkeep
 
 outputs/
+results/
+
 .env

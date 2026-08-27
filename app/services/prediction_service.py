@@ -4,7 +4,6 @@ import pandas as pd
 from fastapi import HTTPException
 
 from app.config import (
-    MODEL_FEATURES,
     PREDICTION_DATE,
     TOP5_LEAGUE_IDS,
 )
@@ -30,14 +29,14 @@ def safe_divide(
     numerator: float,
     denominator: float,
 ) -> float:
-    """
-    0으로 나누거나 결측치가 있는 경우 NaN 반환
-    """
 
-    if pd.isna(numerator) or pd.isna(denominator):
-        return np.nan
+    if pd.isna(denominator):
+        return 0.0
 
-    if denominator == 0:
+    if denominator <= 0:
+        return 0.0
+
+    if pd.isna(numerator):
         return np.nan
 
     return numerator / denominator
@@ -65,6 +64,10 @@ def build_prediction_input(
 
     to_league_id = request.to_league_id.strip()
 
+    # --------------------------------------------------------
+    # Player Basic Information
+    # --------------------------------------------------------
+
     age_at_transfer = calculate_age(
         player.get("date_of_birth"),
         PREDICTION_DATE,
@@ -74,6 +77,10 @@ def build_prediction_input(
         player.get("height"),
         errors="coerce",
     )
+
+    # --------------------------------------------------------
+    # League Stats
+    # --------------------------------------------------------
 
     matches = pd.to_numeric(
         player.get("matches"),
@@ -104,6 +111,115 @@ def build_prediction_input(
         player.get("rating"),
         errors="coerce",
     )
+
+    # ========================================================
+    # v1.3 European Competition Features
+    # ========================================================
+
+    ucl_appearances = pd.to_numeric(
+        player.get("ucl_appearances"),
+        errors="coerce",
+    )
+
+    ucl_starts = pd.to_numeric(
+        player.get("ucl_starts"),
+        errors="coerce",
+    )
+
+    ucl_goals = pd.to_numeric(
+        player.get("ucl_goals"),
+        errors="coerce",
+    )
+
+    ucl_assists = pd.to_numeric(
+        player.get("ucl_assists"),
+        errors="coerce",
+    )
+
+    uel_appearances = pd.to_numeric(
+        player.get("uel_appearances"),
+        errors="coerce",
+    )
+
+    uel_starts = pd.to_numeric(
+        player.get("uel_starts"),
+        errors="coerce",
+    )
+
+    uel_goals = pd.to_numeric(
+        player.get("uel_goals"),
+        errors="coerce",
+    )
+
+    uel_assists = pd.to_numeric(
+        player.get("uel_assists"),
+        errors="coerce",
+    )
+
+    uecl_appearances = pd.to_numeric(
+        player.get("uecl_appearances"),
+        errors="coerce",
+    )
+
+    uecl_starts = pd.to_numeric(
+        player.get("uecl_starts"),
+        errors="coerce",
+    )
+
+    uecl_goals = pd.to_numeric(
+        player.get("uecl_goals"),
+        errors="coerce",
+    )
+
+    uecl_assists = pd.to_numeric(
+        player.get("uecl_assists"),
+        errors="coerce",
+    )
+
+    # --------------------------------------------------------
+    # 유럽대항전 기록이 없는 선수는 0
+    # --------------------------------------------------------
+
+    european_values = [
+        ucl_appearances,
+        ucl_starts,
+        ucl_goals,
+        ucl_assists,
+
+        uel_appearances,
+        uel_starts,
+        uel_goals,
+        uel_assists,
+
+        uecl_appearances,
+        uecl_starts,
+        uecl_goals,
+        uecl_assists,
+    ]
+
+    european_values = [
+        0.0
+        if pd.isna(value)
+        else float(value)
+        for value in european_values
+    ]
+
+    (
+        ucl_appearances,
+        ucl_starts,
+        ucl_goals,
+        ucl_assists,
+
+        uel_appearances,
+        uel_starts,
+        uel_goals,
+        uel_assists,
+
+        uecl_appearances,
+        uecl_starts,
+        uecl_goals,
+        uecl_assists,
+    ) = european_values
 
     # ========================================================
     # v1.1 Feature Engineering
@@ -154,8 +270,14 @@ def build_prediction_input(
     # ========================================================
 
     row = {
+
+        # ----------------------------------------------------
+        # 기존 Feature
+        # ----------------------------------------------------
+
         "age_at_transfer": age_at_transfer,
         "height": height,
+
         "matches": matches,
         "started": started,
         "goals": goals,
@@ -175,11 +297,14 @@ def build_prediction_input(
 
         "goals_per90": goals_per90,
         "assists_per90": assists_per90,
+
         "goal_contributions_per90": (
             goal_contributions_per90
         ),
+
         "starts_ratio": starts_ratio,
         "minutes_per_match": minutes_per_match,
+
         "age_squared": age_squared,
 
         "from_league_id": from_league_id,
@@ -192,11 +317,30 @@ def build_prediction_input(
         "foot": player.get(
             "foot"
         ),
+
+        # ----------------------------------------------------
+        # v1.3 Europe Feature
+        # ----------------------------------------------------
+
+        "ucl_appearances": ucl_appearances,
+        "ucl_starts": ucl_starts,
+        "ucl_goals": ucl_goals,
+        "ucl_assists": ucl_assists,
+
+        "uel_appearances": uel_appearances,
+        "uel_starts": uel_starts,
+        "uel_goals": uel_goals,
+        "uel_assists": uel_assists,
+
+        "uecl_appearances": uecl_appearances,
+        "uecl_starts": uecl_starts,
+        "uecl_goals": uecl_goals,
+        "uecl_assists": uecl_assists,
     }
 
     return pd.DataFrame(
         [row]
-    )[MODEL_FEATURES]
+    )
 
 
 # ============================================================
@@ -210,7 +354,7 @@ def predict_fee(
     bundle = get_model()
 
     # ========================================================
-    # v1.2 Ensemble 정보
+    # v1.3 Ensemble 정보
     # ========================================================
 
     model_c = bundle["model_c"]
@@ -265,7 +409,7 @@ def predict_fee(
     )
 
     # ========================================================
-    # v1.2 Final Ensemble
+    # v1.3 Final Ensemble
     # ========================================================
 
     predicted_fee = (
@@ -273,11 +417,30 @@ def predict_fee(
         + alpha_d * pred_d
     )
 
+    # ========================================================
+    # Debug - Model Prediction
+    # ========================================================
+
+    print("\n" + "-" * 60)
+    print("MODEL PREDICTION")
+    print("-" * 60)
+
     print(
-        f"Model C: {pred_c / 1_000_000:.2f}M | "
-        f"Model D: {pred_d / 1_000_000:.2f}M | "
-        f"Final: {predicted_fee / 1_000_000:.2f}M"
+        f"Model C ({alpha_c:.0%}): "
+        f"{pred_c / 1_000_000:.2f}M"
     )
+
+    print(
+        f"Model D ({alpha_d:.0%}): "
+        f"{pred_d / 1_000_000:.2f}M"
+    )
+
+    print(
+        f"Final Ensemble: "
+        f"{predicted_fee / 1_000_000:.2f}M"
+    )
+
+    print("-" * 60)
 
     return float(
         predicted_fee
@@ -291,6 +454,10 @@ def predict_fee(
 def predict_transfer_fee(
     request: PredictionRequest,
 ) -> PredictionResponse:
+
+    # --------------------------------------------------------
+    # Player
+    # --------------------------------------------------------
 
     player = get_player(
         request.player_id
@@ -314,16 +481,49 @@ def predict_transfer_fee(
         request=request,
     )
 
+    # ========================================================
+    # Debug - 실제 모델 입력값
+    # ========================================================
+
+    print("\n")
+    print("=" * 60)
+
+    print(
+        f"Prediction Input: "
+        f"{player['player_name']}"
+    )
+
+    print(
+        f"Destination: "
+        f"{request.to_league_id}"
+    )
+
+    print("=" * 60)
+
+    print(
+        prediction_input.T.to_string(
+            header=False
+        )
+    )
+
+    print("=" * 60)
+
     # --------------------------------------------------------
-    # Prediction
+    # 실제 Prediction
     # --------------------------------------------------------
 
     predicted_fee = predict_fee(
         prediction_input
     )
 
-    # v1.2 Ensemble SHAP은 별도 구현 예정
-    explanation = []
+
+    # --------------------------------------------------------
+    # v1.3 Ensemble SHAP은 별도 구현 예정
+    # --------------------------------------------------------
+
+    explanation = explain_prediction(
+        prediction_input
+    )
 
     # --------------------------------------------------------
     # Response
