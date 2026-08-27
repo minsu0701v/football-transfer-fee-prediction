@@ -12,6 +12,7 @@ function App() {
   const [prediction, setPrediction] = useState(null)
   const [predictionLoading, setPredictionLoading] = useState(false)
   const [predictionError, setPredictionError] = useState('')
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const searchPlayers = async () => {
     const query = searchQuery.trim()
@@ -25,7 +26,7 @@ function App() {
       setSearchError('')
 
       const response = await fetch(
-        `http://127.0.0.1:8000/players/search?q=${encodeURIComponent(query)}&limit=8`
+        `${API_URL}/players/search?q=${encodeURIComponent(query)}&limit=8`
       )
 
       if (!response.ok) {
@@ -61,7 +62,7 @@ function App() {
       setPredictionError('')
 
       const response = await fetch(
-        'http://127.0.0.1:8000/predict',
+        `${API_URL}/predict`,
         {
           method: 'POST',
           headers: {
