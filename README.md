@@ -57,7 +57,7 @@ PostgreSQL, Docker, Nginx를 활용하여 클라우드 환경에 배포했습니
 |---|---|---:|
 | Train | 2020~2024 여름 이적시장 | 1,302 |
 | Test | 2025 여름 이적시장 | 289 |
-| Prediction Pool | 2025 예측 대상 선수 | 2,479 |
+| Prediction Pool | 2025 예측 대상 선수 풀 | 2,479 |
 
 학습 대상은 실제 이적료가 발생한 **유상 완전이적 사례**를 기준으로 구성했습니다.
 
@@ -266,8 +266,9 @@ app (FastAPI)
 db (PostgreSQL)
 ```
 
-외부에는 Nginx의 `80`, `443` 포트만 서비스용으로 공개하며,  
-FastAPI와 PostgreSQL은 Docker 네트워크를 통해 통신합니다.
+외부 서비스 트래픽은 Nginx의 `80`, `443` 포트를 통해 수신하며,  
+SSH `22` 포트는 관리자 IP에 대해서만 허용합니다.  
+FastAPI와 PostgreSQL은 Docker 네트워크 내부에서 통신합니다.
 
 ---
 
