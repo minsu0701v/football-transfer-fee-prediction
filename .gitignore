@@ -6,7 +6,7 @@ data/**/*.csv
 
 # Trained model artifacts
 models/*
-!models/.gitkeep
+!models/transfer_fee_model_v1_3.joblib
 
 outputs/
 results/
