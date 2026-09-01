@@ -5,31 +5,114 @@
 
 .sidebar {
   width: 230px;
-  padding: 28px 20px;
+  flex-shrink: 0;
+  padding: 26px 18px;
   background: #07101d;
   border-right: 1px solid #1e293b;
 }
 
-.sidebar h2 {
-  margin: 0;
-  font-size: 18px;
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 10px;
+  color: #f8fafc;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
 }
 
-.sidebar nav {
-  margin-top: 45px;
+.brand-ball {
+  font-size: 28px;
 }
 
-.sidebar nav p {
-  padding: 14px 12px;
-  margin: 5px 0;
-  border-radius: 8px;
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 40px;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 48px;
+  padding: 8px 11px;
+  border-radius: 10px;
   color: #94a3b8;
-  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: default;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
 }
 
-.sidebar nav p:first-child {
+.sidebar-item.active {
   color: #34d399;
   background: rgba(52, 211, 153, 0.1);
+}
+
+.home-icon {
+  width: 30px;
+  text-align: center;
+  color: #34d399;
+  font-size: 25px;
+  line-height: 1;
+}
+
+.league-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 17px 10px 8px;
+  color: #475569;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+}
+
+.league-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #1e293b;
+}
+
+.league-shield {
+  width: 30px;
+  height: 34px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  clip-path: polygon(50% 0, 94% 15%, 88% 72%, 50% 100%, 12% 72%, 6% 15%);
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.league-shield.premier {
+  background: linear-gradient(145deg, #6844a4, #3d195b);
+}
+
+.league-shield.laliga {
+  background: linear-gradient(145deg, #ff5b45, #e2261c);
+}
+
+.league-shield.bundesliga {
+  background: linear-gradient(145deg, #ef3340, #c8102e);
+}
+
+.league-shield.seriea {
+  background: linear-gradient(145deg, #1687d9, #0755a5);
+}
+
+.league-shield.ligue1 {
+  background: linear-gradient(145deg, #d4ff36, #86a800);
+  color: #07101d;
 }
 
 .main-content {

@@ -100,16 +100,45 @@ function App() {
   return (
     <div className="app">
       <aside className="sidebar">
-        <h2>⚽ Football</h2>
-        <h2>Transfer Predictor</h2>
+        <div className="sidebar-brand">
+          <span className="brand-ball">⚽</span>
+          <span>Transfer<br />Predictor</span>
+        </div>
 
-        <nav>
-          <p>⌂ 홈</p>
-          <p>□ 예측 기록</p>
-          <p>☆ 관심 선수</p>
-          <p>▥ 통계 대시보드</p>
-          <p>ⓘ 모델 설명</p>
-          <p>♙ 팀</p>
+        <nav className="sidebar-nav">
+          <div className="sidebar-item active">
+            <span className="home-icon">⌂</span>
+            <span>홈</span>
+          </div>
+
+          <div className="league-divider">
+            <span>LEAGUES</span>
+          </div>
+
+          <div className="sidebar-item">
+            <span className="league-shield premier">PL</span>
+            <span>Premier League</span>
+          </div>
+
+          <div className="sidebar-item">
+            <span className="league-shield laliga">ES</span>
+            <span>La Liga</span>
+          </div>
+
+          <div className="sidebar-item">
+            <span className="league-shield bundesliga">DE</span>
+            <span>Bundesliga</span>
+          </div>
+
+          <div className="sidebar-item">
+            <span className="league-shield seriea">IT</span>
+            <span>Serie A</span>
+          </div>
+
+          <div className="sidebar-item">
+            <span className="league-shield ligue1">FR</span>
+            <span>Ligue 1</span>
+          </div>
         </nav>
       </aside>
 
