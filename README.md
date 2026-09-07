@@ -8,6 +8,9 @@
 
 🌐 **Service:** https://football-transfee-prediction.netlify.app/
 
+> 예측값은 2024/25시즌 데이터를 기반으로 생성한 **2025년 여름 시점의 추정치**이며,
+> 현재 선수의 실시간 시장가치를 제공하지 않습니다.
+
 ---
 
 ## 📌 Project Overview
@@ -55,7 +58,7 @@ PostgreSQL, Docker, Nginx를 활용하여 클라우드 환경에 배포했습니
 
 | Dataset | Period | Samples |
 |---|---|---:|
-| Train | 2020~2024 여름 이적시장 | 1,302 |
+| Train | 2020~2024 여름 이적시장 | 1,013 |
 | Test | 2025 여름 이적시장 | 289 |
 | Prediction Pool | 2025 예측 대상 선수 풀 | 2,479 |
 
@@ -81,6 +84,9 @@ PostgreSQL, Docker, Nginx를 활용하여 클라우드 환경에 배포했습니
 유럽대항전은 단순 출전 여부뿐 아니라  
 출전 경기, 선발 출전, 득점, 도움 등의 기록을 feature로 활용했습니다.
 
+최종 모델은 선수의 기존 시장가치(`value_at_transfer`)를 입력 특성에서 제외하고,
+경기 기록과 선수 정보만으로 실제 이적료를 예측하도록 구성했습니다.
+
 ### Ensemble
 
 최종 예측에는 두 모델의 결과를 결합한 **Weighted Ensemble**을 사용합니다.
@@ -90,6 +96,10 @@ PostgreSQL, Docker, Nginx를 활용하여 클라우드 환경에 배포했습니
 | Model C | 31 | 40% |
 | Model D | 30 | 60% |
 
+Model C와 Model D는 모두 XGBoost 회귀 모델이며 입력 특성 구성이 다릅니다.
+Model C는 예상 이적 리그(`to_league_id`)를 사용하고,
+Model D는 해당 특성을 제외하여 목적 리그에 대한 과도한 의존을 완화했습니다.
+두 모델 모두 `is_same_league`와 선수의 기존 시장가치를 사용하지 않습니다.
 최종 예측값은 다음과 같이 계산됩니다.
 
 ```text
@@ -191,7 +201,7 @@ TLS 인증서는 Let's Encrypt를 이용하여 적용했습니다.
 
 | Category | Technologies |
 |---|---|
-| Machine Learning | Python, pandas, NumPy, scikit-learn |
+| Machine Learning | Python, pandas, NumPy, scikit-learn, XGBoost |
 | Explainability | SHAP |
 | Backend | FastAPI, Uvicorn |
 | Database | PostgreSQL |
